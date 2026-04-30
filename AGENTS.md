@@ -1,5 +1,9 @@
 # AGENTS.md
 
+## Source repository
+
+[https://github.com/pr1m8/ultilog](https://github.com/pr1m8/ultilog)
+
 ## Purpose
 
 This repository contains `ultilog`, a Python package for ergonomic logging.

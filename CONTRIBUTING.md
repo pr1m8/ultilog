@@ -1,5 +1,23 @@
 # Contributing
 
+## Repository
+
+Canonical Git remote is **`pr1m8/ultilog`** (package name `ultilog`, one `t` after `u`):
+
+- [https://github.com/pr1m8/ultilog](https://github.com/pr1m8/ultilog)
+
+An older typo-named remote (`utillog`) may still exist on GitHub; ignore it in favor of **`ultilog`**.
+
+## PyPI trusted publishing
+
+Releases publish from `.github/workflows/release.yml` using the GitHub Environment **`pypi`**. In [PyPI](https://pypi.org/manage/account/publishing/), the trusted publisher for this project must reference:
+
+- **Repository:** `pr1m8/ultilog`
+- **Workflow:** `release.yml`
+- **Environment:** `pypi`
+
+If you previously configured `pr1m8/utillog`, update or replace that entry so it matches **`pr1m8/ultilog`**.
+
 ## Development Setup
 
 ```bash

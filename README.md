@@ -1,5 +1,7 @@
 # ultilog
 
+**Repository:** [github.com/pr1m8/ultilog](https://github.com/pr1m8/ultilog)
+
 `ultilog` is an ergonomic Python logging package that starts with a tiny API and
 scales toward structured observability.
 
