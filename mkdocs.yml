@@ -1,0 +1,39 @@
+site_name: ultilog
+site_description: Ergonomic Python logging with a path to structured observability.
+repo_url: https://github.com/pr1m8/ultilog
+nav:
+  - Home: index.md
+  - Quickstart: quickstart.md
+  - Architecture: architecture.md
+  - Cookbook: cookbook.md
+  - Testing: testing.md
+  - Roadmap: roadmap.md
+  - Concepts:
+      - Bootstrap: concepts/bootstrap.md
+      - Logger Lifecycle: concepts/logger-lifecycle.md
+      - Context: concepts/context.md
+      - Presets: concepts/presets.md
+  - Reference:
+      - Public API: reference/public-api.md
+      - Settings: reference/settings.md
+  - Integrations:
+      - Rich: integrations/rich.md
+      - Structlog: integrations/structlog.md
+      - OpenTelemetry: integrations/otel.md
+  - ADRs:
+      - Ergonomic API: adr/0001-ergonomic-public-api.md
+      - Lazy Bootstrap: adr/0002-lazy-bootstrap.md
+      - Context Boundaries: adr/0003-context-boundaries.md
+      - Stdlib Spine: adr/0004-stdlib-as-spine.md
+      - Optional Integrations: adr/0005-optional-integrations.md
+      - Settings Behind API: adr/0006-settings-behind-api.md
+      - Testing Bootstrap: adr/0007-testing-first-bootstrap.md
+      - JSON Prod Mode: adr/0008-json-prod-mode.md
+theme:
+  name: material
+markdown_extensions:
+  - admonition
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.superfences
