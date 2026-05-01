@@ -1,4 +1,8 @@
-"""Run the packaged demo application."""
+"""12 — Run the full demo application.
+
+Run:
+    PYTHONPATH=src python examples/12_demo_app.py
+"""
 
 from __future__ import annotations
 

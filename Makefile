@@ -23,9 +23,11 @@ doctor:
 
 examples:
 	PYTHONPATH=src python examples/01_zero_config.py
-	PYTHONPATH=src python examples/04_json_mode.py
+	PYTHONPATH=src python examples/02_setup_dev.py
+	PYTHONPATH=src python examples/03_setup_prod.py
 	PYTHONPATH=src python examples/05_context_scope.py
-	PYTHONPATH=src python examples/09_asgi_shape.py
+	PYTHONPATH=src python examples/06_json_mode.py
+	PYTHONPATH=src python examples/10_asgi_shape.py
 
 clean:
 	find . -type d -name '__pycache__' -prune -exec rm -rf {} +

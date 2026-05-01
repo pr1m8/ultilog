@@ -1,36 +1,28 @@
-"""ASGI middleware shape example.
+"""10 — ASGI middleware demo (no FastAPI/Starlette required).
 
-Purpose
--------
-Demonstrate how ``UltilogASGIMiddleware`` wraps an ASGI app without requiring
-FastAPI or Starlette.
-
-Examples
---------
-.. code-block:: bash
-
-    PYTHONPATH=src python examples/09_asgi_shape.py
+Run:
+    PYTHONPATH=src python examples/10_asgi_shape.py
 """
 
 from __future__ import annotations
 
 import asyncio
 
-from ultilog import get_logger, setup
+from ultilog import get_logger, setup_dev
 from ultilog.integrations.asgi import UltilogASGIMiddleware
 
-setup(mode="plain", force=True)
+setup_dev(level="INFO")
 log = get_logger("examples.asgi")
 
 
 async def app(scope, receive, send):
-    log.info("inside.asgi.app")
+    log.info("inside.asgi.app")  # context includes request_id, http.method, http.path
     await send({"type": "http.response.start", "status": 200, "headers": []})
     await send({"type": "http.response.body", "body": b"ok"})
 
 
 async def main() -> None:
-    sent = []
+    sent: list[dict] = []
 
     async def receive():
         return {"type": "http.request", "body": b""}

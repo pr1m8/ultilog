@@ -1,14 +1,9 @@
-"""Manual handler composition example.
+"""09 — Manual handler composition without setup().
 
-Purpose
--------
-Show how advanced users can use ultilog factories without the top-level setup.
+Advanced users can compose ultilog handler factories and formatters directly.
 
-Examples
---------
-.. code-block:: bash
-
-    PYTHONPATH=src python examples/08_manual_handlers.py
+Run:
+    PYTHONPATH=src python examples/09_manual_handlers.py
 """
 
 from __future__ import annotations
