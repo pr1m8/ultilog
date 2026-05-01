@@ -24,6 +24,7 @@ import logging
 from ultilog.formatters.json import JsonFormatter
 from ultilog.handlers.rich import create_rich_handler
 from ultilog.handlers.stream import create_stream_handler, resolve_stream
+from ultilog.otel.availability import otel_available
 from ultilog.records.context_filter import ContextFilter
 from ultilog.settings import UltilogSettings
 
@@ -52,6 +53,11 @@ def configure_basic_logging(settings: UltilogSettings, *, force: bool | None = N
                 include_text=settings.context.include_in_text and settings.logging.include_context,
             )
         )
+
+    if settings.otel.inject_trace_ids and otel_available():
+        from ultilog.otel.correlation import TraceCorrelationFilter
+
+        handler.addFilter(TraceCorrelationFilter())
 
     logging.basicConfig(
         level=settings.logging.level_value,

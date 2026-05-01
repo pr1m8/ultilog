@@ -108,6 +108,12 @@ class UltilogSettings(BaseSettings):
             self.rich.enabled = False
             self.rich.show_path = False
             self.rich.rich_tracebacks = False
+        elif self.preset == "dev":
+            # Dev preset only enhances prettiness; defaults already produce
+            # rich mode + enabled, so don't override them (so users can still
+            # set mode="json" or rich.enabled=False at the dev preset).
+            self.rich.rich_tracebacks = True
+            self.rich.tracebacks_show_locals = True
         return self
 
     @model_validator(mode="after")

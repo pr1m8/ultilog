@@ -28,6 +28,9 @@ from ultilog.api import (
     logging_context,
     reset_logging,
     setup,
+    setup_dev,
+    setup_prod,
+    setup_test,
 )
 
 __all__ = [
@@ -40,4 +43,7 @@ __all__ = [
     "logging_context",
     "reset_logging",
     "setup",
+    "setup_dev",
+    "setup_prod",
+    "setup_test",
 ]

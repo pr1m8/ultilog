@@ -80,6 +80,81 @@ def setup(*, preset: str | None = None, force: bool = False, **overrides: Any) -
     setup_logging(force=force, **overrides)
 
 
+def setup_dev(*, level: str = "DEBUG", force: bool = True, **overrides: Any) -> None:
+    """One-line setup for local development with super-pretty Rich output.
+
+    Uses the ``dev`` preset (Rich console, colored output) at DEBUG level by
+    default so you see everything while iterating. Enables Rich tracebacks
+    with local variables shown.
+
+    Args:
+        level: Logging level (defaults to ``DEBUG``).
+        force: Whether to reconfigure if already configured (defaults to True).
+        **overrides: Additional flat setting overrides.
+
+    Returns:
+        None.
+
+    Examples:
+        >>> setup_dev()
+    """
+    overrides.setdefault("rich_tracebacks", True)
+    overrides.setdefault("tracebacks_show_locals", True)
+    overrides.setdefault("show_path", True)
+    overrides.setdefault("show_time", True)
+    setup_logging(force=force, preset="dev", level=level, **overrides)
+
+
+def setup_prod(
+    *,
+    level: str = "INFO",
+    service_name: str | None = None,
+    force: bool = True,
+    **overrides: Any,
+) -> None:
+    """One-line setup for production.
+
+    Uses the ``prod`` preset (JSON output, Rich disabled) at INFO level. When
+    ``service_name`` is provided and the ``opentelemetry`` package is available,
+    OTel trace/log correlation attaches automatically.
+
+    Args:
+        level: Logging level (defaults to ``INFO``).
+        service_name: Optional service name for OTel resource attribution.
+        force: Whether to reconfigure if already configured (defaults to True).
+        **overrides: Additional flat setting overrides.
+
+    Returns:
+        None.
+
+    Examples:
+        >>> setup_prod(service_name="my-api")
+    """
+    if service_name is not None:
+        overrides.setdefault("service_name", service_name)
+    setup_logging(force=force, preset="prod", level=level, **overrides)
+
+
+def setup_test(*, level: str = "WARNING", force: bool = True, **overrides: Any) -> None:
+    """One-line setup for test suites.
+
+    Uses the ``test`` preset (plain output, Rich disabled) at WARNING level so
+    test output stays quiet unless something goes wrong.
+
+    Args:
+        level: Logging level (defaults to ``WARNING``).
+        force: Whether to reconfigure if already configured (defaults to True).
+        **overrides: Additional flat setting overrides.
+
+    Returns:
+        None.
+
+    Examples:
+        >>> setup_test()
+    """
+    setup_logging(force=force, preset="test", level=level, **overrides)
+
+
 def configure(settings: UltilogSettings, *, force: bool = False) -> None:
     """Configure logging using an explicit settings object.
 
@@ -132,4 +207,7 @@ __all__ = [
     "logging_context",
     "reset_logging",
     "setup",
+    "setup_dev",
+    "setup_prod",
+    "setup_test",
 ]
