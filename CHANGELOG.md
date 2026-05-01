@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.3.0
+
+### Added
+
+- `setup_dev()` — one-line super-pretty Rich setup (DEBUG, tracebacks with locals)
+- `setup_prod()` — one-line JSON setup with optional `service_name` for OTel
+- `setup_test()` — one-line plain WARNING setup for test suites
+- Auto-attached `TraceCorrelationFilter` when `opentelemetry` is importable, so `trace_id` / `span_id` flow into log records under any active span without manual wiring
+- Dev preset now enables `rich_tracebacks` and `tracebacks_show_locals` for richer error reports
+- Renumbered and rewrote all examples to use the new helpers; added `08_otel_correlation.py`
+
+### Changed
+
+- Cleaned up examples folder: removed duplicate-numbered files (`04_environment_overrides.py`) and future-API stubs (`05_future_context_scope.py`, `06_future_otel.py`)
+
 ## 0.2.0
 
 ### Added

@@ -43,6 +43,19 @@ log = get_logger()
 log.info("hello")
 ```
 
+### One-line helpers
+
+```python
+from ultilog import setup_dev, setup_prod, setup_test, get_logger
+
+setup_dev()                           # super-pretty Rich, DEBUG, tracebacks with locals
+setup_prod(service_name="my-api")     # JSON, INFO, OTel correlation auto-attached
+setup_test()                          # plain WARNING, quiet test output
+
+log = get_logger(__name__)
+log.info("ready")
+```
+
 ### Explicit naming
 
 ```python
@@ -50,27 +63,32 @@ log = get_logger(__name__)
 log = get_logger("my.service")
 ```
 
-### Optional setup
+### Custom setup
 
 ```python
-from ultilog import setup, get_logger
+from ultilog import setup
 
-setup(level="DEBUG", force=True)
-log = get_logger()
+setup(level="DEBUG", mode="json", force=True)
 ```
 
 ### Presets
 
-Three presets configure sensible defaults:
-
 | Preset | Mode | Level | Rich |
 |--------|------|-------|------|
-| `dev` (default) | `rich` | INFO | Enabled |
+| `dev` (default) | `rich` | INFO | Enabled, tracebacks + locals |
 | `test` | `plain` | WARNING | Disabled |
 | `prod` | `json` | INFO | Disabled |
 
 ```python
 setup(preset="prod", force=True)
+```
+
+### OpenTelemetry auto-correlation
+
+If the `opentelemetry` package is installed, ultilog auto-attaches a trace correlation filter so `trace_id` and `span_id` appear on log records inside any active span — no extra setup required. Install with:
+
+```bash
+pip install "ultilog[otel]"
 ```
 
 ## Modes
