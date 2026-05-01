@@ -20,11 +20,12 @@ Examples
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from contextvars import ContextVar, Token
 from types import MappingProxyType
-from typing import Any, Mapping
+from typing import Any
 
-_context: ContextVar[dict[str, Any]] = ContextVar("ultilog_context", default={})
+_context: ContextVar[dict[str, Any]] = ContextVar("ultilog_context", default={})  # noqa: B039
 
 
 def get_context() -> Mapping[str, Any]:

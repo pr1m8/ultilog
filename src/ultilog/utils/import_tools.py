@@ -63,7 +63,8 @@ def require_module(name: str, *, extra: str | None = None) -> ModuleType:
     """
     if not is_module_available(name):
         suffix = f" Install ultilog[{extra}]." if extra else ""
-        raise UltilogOptionalDependencyError(f"Optional dependency {name!r} is not installed.{suffix}")
+        msg = f"Optional dependency {name!r} is not installed.{suffix}"
+        raise UltilogOptionalDependencyError(msg)
     return import_module(name)
 
 

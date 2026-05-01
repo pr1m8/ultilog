@@ -15,4 +15,4 @@ def test_create_rich_handler_returns_handler() -> None:
 
 def test_create_rich_handler_applies_settings() -> None:
     handler = create_rich_handler(settings=RichSettings(show_path=False))
-    assert handler._log_render.show_path is False  # noqa: SLF001
+    assert handler._log_render.show_path is False

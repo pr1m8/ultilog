@@ -75,7 +75,9 @@ class ListHandler(logging.Handler):
 
 
 @contextmanager
-def capture_logs(name: str | None = None, *, level: int = logging.DEBUG) -> Iterator[list[logging.LogRecord]]:
+def capture_logs(
+    name: str | None = None, *, level: int = logging.DEBUG
+) -> Iterator[list[logging.LogRecord]]:
     """Capture records emitted by a logger.
 
     Args:

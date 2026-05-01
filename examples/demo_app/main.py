@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from ultilog import setup
-
 from demo_app.services import process_order
 from demo_app.settings import DemoSettings
+from ultilog import setup
 
 
 def main() -> None:

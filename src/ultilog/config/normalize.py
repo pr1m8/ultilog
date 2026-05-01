@@ -24,7 +24,7 @@ def normalize_level(level: str | int) -> int:
     if isinstance(level, int):
         return level
     try:
-        return logging._nameToLevel[level.upper()]  # noqa: SLF001
+        return logging._nameToLevel[level.upper()]
     except KeyError as exc:
         raise ValueError(f"Unknown logging level: {level!r}") from exc
 

@@ -21,7 +21,9 @@ from __future__ import annotations
 import logging
 
 
-def create_text_formatter(fmt: str = "%(message)s", *, datefmt: str | None = None) -> logging.Formatter:
+def create_text_formatter(
+    fmt: str = "%(message)s", *, datefmt: str | None = None
+) -> logging.Formatter:
     """Create a standard text formatter.
 
     Args:

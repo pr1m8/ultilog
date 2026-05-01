@@ -21,15 +21,15 @@ Examples
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
-from typing import Any, TypeAlias
+from typing import Any
 
 from ultilog.context.managers import logging_context
 from ultilog.context.request import request_context_values
 
-Scope: TypeAlias = dict[str, Any]
-Receive: TypeAlias = Callable[[], Awaitable[dict[str, Any]]]
-Send: TypeAlias = Callable[[dict[str, Any]], Awaitable[None]]
-ASGIApp: TypeAlias = Callable[[Scope, Receive, Send], Awaitable[None]]
+type Scope = dict[str, Any]
+type Receive = Callable[[], Awaitable[dict[str, Any]]]
+type Send = Callable[[dict[str, Any]], Awaitable[None]]
+type ASGIApp = Callable[[Scope, Receive, Send], Awaitable[None]]
 
 
 class UltilogASGIMiddleware:

@@ -26,6 +26,8 @@ Examples
 
 from __future__ import annotations
 
+import warnings
+from importlib.util import find_spec
 from typing import Any, Self
 
 from pydantic import Field, model_validator
@@ -106,6 +108,43 @@ class UltilogSettings(BaseSettings):
             self.rich.enabled = False
             self.rich.show_path = False
             self.rich.rich_tracebacks = False
+        return self
+
+    @model_validator(mode="after")
+    def validate_combinations(self) -> Self:
+        """Validate settings combinations and fix incompatible values.
+
+        Args:
+            None.
+
+        Returns:
+            The validated settings object.
+
+        Raises:
+            ValueError: If an optional dependency is enabled but not installed.
+
+        Examples:
+            >>> ls = LoggingSettings(mode="rich")
+            >>> s = UltilogSettings(logging=ls, rich=RichSettings(enabled=False))
+            >>> s.logging.mode
+            'plain'
+        """
+        if self.logging.mode == "rich" and not self.rich.enabled:
+            warnings.warn(
+                "mode='rich' but rich.enabled=False; auto-setting mode to 'plain'",
+                UserWarning,
+                stacklevel=2,
+            )
+            self.logging.mode = "plain"
+
+        if self.structlog.enabled and find_spec("structlog") is None:
+            msg = "structlog.enabled=True but structlog is not installed"
+            raise ValueError(msg)
+
+        if self.otel.enabled and find_spec("opentelemetry") is None:
+            msg = "otel.enabled=True but opentelemetry is not installed"
+            raise ValueError(msg)
+
         return self
 
     @classmethod

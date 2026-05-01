@@ -88,7 +88,7 @@ class LoggingSettings(BaseModel):
             if value < 0:
                 raise ValueError("Logging level must be non-negative.")
             return value
-        if value.upper() not in logging._nameToLevel:  # noqa: SLF001
+        if value.upper() not in logging._nameToLevel:
             raise ValueError(f"Unknown logging level: {value!r}")
         return value.upper()
 
@@ -109,7 +109,7 @@ class LoggingSettings(BaseModel):
         """
         if isinstance(self.level, int):
             return self.level
-        return logging._nameToLevel[self.level.upper()]  # noqa: SLF001
+        return logging._nameToLevel[self.level.upper()]
 
     @computed_field
     @property
