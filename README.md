@@ -1,6 +1,7 @@
 # ultilog
 
 [![CI](https://github.com/pr1m8/ultilog/actions/workflows/ci.yml/badge.svg)](https://github.com/pr1m8/ultilog/actions/workflows/ci.yml)
+[![Docs](https://github.com/pr1m8/ultilog/actions/workflows/docs.yml/badge.svg)](https://pr1m8.github.io/ultilog/)
 [![PyPI](https://img.shields.io/pypi/v/ultilog)](https://pypi.org/project/ultilog/)
 [![Python](https://img.shields.io/pypi/pyversions/ultilog)](https://pypi.org/project/ultilog/)
 [![License](https://img.shields.io/github/license/pr1m8/ultilog)](https://github.com/pr1m8/ultilog/blob/main/LICENSE)
