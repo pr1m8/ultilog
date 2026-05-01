@@ -2,28 +2,42 @@
 
 Purpose
 -------
-Scaffold future structlog bridge.
+Determine whether ``ultilog`` should route logging through structlog or
+through the standard library.
+
+Design
+------
+The bridge is enabled when the ``structlog`` extra is installed **and** the
+user has explicitly enabled it in settings.  This keeps the default behaviour
+unchanged for applications that do not opt in.
 """
 
 from __future__ import annotations
 
+from importlib.util import find_spec
+
+
 def bridge_enabled() -> bool:
-    """Return whether the future structlog bridge is enabled.
+    """Return whether structlog bridging is available.
+
+    The bridge is considered available when the ``structlog`` package can be
+    imported.  Actual activation still requires ``StructlogSettings.enabled``
+    to be ``True``.
 
     Args:
-        None
+        None.
 
     Returns:
-        ``False`` in Phase 1.
+        ``True`` when structlog is importable.
 
     Raises:
-        None
+        None.
 
     Examples:
-        >>> bridge_enabled()
-        False
+        >>> isinstance(bridge_enabled(), bool)
+        True
     """
-    return False
+    return find_spec("structlog") is not None
 
 
 __all__ = ["bridge_enabled"]

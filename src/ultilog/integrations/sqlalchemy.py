@@ -1,40 +1,57 @@
-"""sqlalchemy integration helpers for ultilog.
+"""SQLAlchemy integration helpers for ``ultilog``.
 
 Purpose
 -------
-Reserve a stable integration function for sqlalchemy while the full adapter matures.
+Configure SQLAlchemy engine logging to flow through ultilog with context.
 
 Design
 ------
-The current helper is a no-op pass-through so applications can safely wire it in
-and upgrade behavior in a later package version.
+The helper configures SQLAlchemy's ``sqlalchemy.engine`` logger to use
+ultilog-managed logging levels without replacing the handler chain.
 """
 
 from __future__ import annotations
 
-from typing import TypeVar
+import logging
+from typing import Any
 
-T = TypeVar("T")
+from ultilog.utils.import_tools import require_module
 
 
-def install_sqlalchemy_logging(target: T) -> T:
-    """Return target unchanged.
+def install_sqlalchemy_logging(
+    engine: Any,
+    *,
+    level: int = logging.WARNING,
+    echo: bool = False,
+) -> Any:
+    """Configure SQLAlchemy engine logging through ultilog.
+
+    Sets the ``sqlalchemy.engine`` logger level and optionally enables
+    SQLAlchemy's built-in ``echo`` mode for query logging.
 
     Args:
-        target: Framework/client object.
+        engine: A SQLAlchemy ``Engine`` instance.
+        level: Logging level for ``sqlalchemy.engine``.
+        echo: Whether to enable SQLAlchemy query echo (sets engine.echo).
 
     Returns:
-        The same object.
+        The same engine for fluent usage.
 
     Raises:
-        None.
+        UltilogOptionalDependencyError: If sqlalchemy is not installed.
 
     Examples:
-        >>> obj = object()
-        >>> install_sqlalchemy_logging(obj) is obj
-        True
+        >>> install_sqlalchemy_logging(engine, level=logging.DEBUG)  # doctest: +SKIP
     """
-    return target
+    require_module("sqlalchemy", extra="sqlalchemy")
+
+    sa_logger = logging.getLogger("sqlalchemy.engine")
+    sa_logger.setLevel(level)
+
+    if echo:
+        engine.echo = True
+
+    return engine
 
 
 __all__ = ["install_sqlalchemy_logging"]
