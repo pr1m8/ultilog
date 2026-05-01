@@ -12,6 +12,17 @@ license = {text = "MIT"}
 authors = [
   {name = "William R. Astley"},
 ]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Topic :: System :: Logging",
+  "Typing :: Typed",
+]
+keywords = ["logging", "structured-logging", "observability", "rich", "opentelemetry"]
 dependencies = [
   "rich>=13.7.0",
   "pydantic>=2.13.0",
@@ -36,6 +47,13 @@ full = [
   "ultilog[structlog,otel,web]",
 ]
 
+[project.urls]
+Homepage = "https://github.com/pr1m8/ultilog"
+Repository = "https://github.com/pr1m8/ultilog"
+Documentation = "https://github.com/pr1m8/ultilog#readme"
+Issues = "https://github.com/pr1m8/ultilog/issues"
+Changelog = "https://github.com/pr1m8/ultilog/blob/main/CHANGELOG.md"
+
 [dependency-groups]
 dev = [
   "pytest>=9.0.3",
@@ -55,6 +73,9 @@ distribution = true
 
 [tool.pdm.build]
 package-dir = "src"
+
+[project.scripts]
+ultilog = "ultilog.__main__:main"
 
 [tool.pytest.ini_options]
 minversion = "9.0"
