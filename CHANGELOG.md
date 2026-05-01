@@ -2,7 +2,35 @@
 
 ## Unreleased
 
-- Document canonical GitHub repository as `pr1m8/ultilog` and PyPI trusted-publisher settings in `README.md`, `CONTRIBUTING.md`, and `AGENTS.md`.
+### Added
+
+- Settings validation for invalid combinations (rich mode / rich disabled auto-fix, optional dep checks)
+- structlog processor chains (`get_default_processors`, `get_json_processors`, `get_console_processors`)
+- structlog renderer helpers with mode-aware selection
+- structlog bridge availability check (dynamic `find_spec`)
+- OpenTelemetry trace setup (`configure_otel_traces`)
+- OpenTelemetry log export (`configure_otel_logs`)
+- OpenTelemetry metrics setup (`configure_otel_metrics`)
+- OpenTelemetry all-in-one exporter setup (`configure_exporters`)
+- OpenTelemetry context propagation (W3C TraceContext + Baggage)
+- Celery integration with signal-based context binding
+- httpx integration with request/response logging hooks
+- RQ integration with job context binding
+- SQLAlchemy integration with engine logging configuration
+- CLI `show-config` subcommand for dumping effective settings
+- CLI `validate` subcommand for configuration checks
+- Expanded diagnostics: formatters, env overrides, python version, dependency versions
+- `validate_config()` helper for programmatic config validation
+- Console script entry point (`ultilog` command)
+- PyPI classifiers, keywords, and project URLs
+- 39 new tests (79 total) covering settings validation, context decorators, async isolation, bootstrap reconfiguration, structlog, OTel, CLI, and more
+- CLAUDE.md for Claude Code guidance
+- Comprehensive documentation: concept guides, integration guides, API reference, settings reference
+
+### Fixed
+
+- All ruff lint errors resolved (import sorting, line length, type aliases, unused directives)
+- New mypy errors from added code resolved
 
 ## 0.1.0 - Scaffold
 

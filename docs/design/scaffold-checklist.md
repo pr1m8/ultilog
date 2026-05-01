@@ -1,54 +1,68 @@
-# Scaffold Checklist
+# Implementation Checklist
 
 ## Package Root
 
-- [x] `pyproject.toml`
-- [x] `README.md`
+- [x] `pyproject.toml` with extras and entry points
+- [x] `README.md` with badges and full documentation
 - [x] `LICENSE`
 - [x] `CHANGELOG.md`
 - [x] `CONTRIBUTING.md`
 - [x] `SECURITY.md`
+- [x] `CLAUDE.md`
 - [x] `Makefile`
 - [x] `noxfile.py`
 - [x] `.pre-commit-config.yaml`
-- [x] GitHub Actions skeleton
+- [x] GitHub Actions CI and release workflows
 
 ## Source Package
 
-- [x] public API
-- [x] bootstrap state
-- [x] settings models
-- [x] handler factories
-- [x] formatter helpers
-- [x] context helpers
-- [x] ASGI/FastAPI shapes
-- [x] optional import helpers
-- [x] diagnostics CLI
-- [x] testing utilities
+- [x] Public API (`get_logger`, `setup`, `configure`, context helpers)
+- [x] Bootstrap with thread safety and idempotency
+- [x] Settings models (logging, rich, context, structlog, otel)
+- [x] Settings validation for invalid combinations
+- [x] Handler factories (rich, stream, file, queue)
+- [x] Formatter helpers (JSON, key-value, text)
+- [x] Context helpers (vars, managers, decorators, request)
+- [x] Context filter for log record injection
+- [x] ASGI middleware with request context
+- [x] FastAPI installation helper
+- [x] Celery signal-based context binding
+- [x] httpx request/response logging hooks
+- [x] RQ worker job context
+- [x] SQLAlchemy engine logging
+- [x] structlog configuration, processors, renderers, bridge
+- [x] OpenTelemetry traces, logs, metrics, correlation, propagation
+- [x] Optional import helpers with graceful degradation
+- [x] CLI with doctor, demo, show-config, validate
+- [x] Testing utilities (reset, capture, factories)
+- [x] Console script entry point
 
 ## Tests
 
-- [x] unit tests
-- [x] integration tests
-- [x] e2e layout
-- [x] example subprocess tests
-- [x] fixture isolation
+- [x] Unit tests (30+ tests)
+- [x] Integration tests (8+ tests)
+- [x] E2E tests (5+ tests)
+- [x] Async context isolation tests
+- [x] Bootstrap reconfiguration tests
+- [x] Settings validation tests
+- [x] Fixture isolation
 
 ## Documentation
 
-- [x] quickstart
-- [x] architecture
-- [x] testing strategy
-- [x] cookbook
-- [x] roadmap
-- [x] ADRs
-- [x] module reference pages
+- [x] Quickstart
+- [x] Architecture
+- [x] Testing strategy
+- [x] Cookbook
+- [x] Roadmap
+- [x] Concept guides (bootstrap, context, presets, lifecycle)
+- [x] Integration guides (Rich, structlog, OTel, web frameworks)
+- [x] Settings reference
+- [x] Public API reference
+- [x] ADRs (8 decisions)
+- [x] Module reference pages
 
-## Deferred Implementation
+## Future
 
-- [ ] full structlog processor bridge
-- [ ] OpenTelemetry provider setup
-- [ ] OTLP exporter configuration
-- [ ] Prometheus/Grafana/Loki/Jaeger specific docs
-- [ ] FastAPI app-level request/response logging policy
-- [ ] Celery/RQ worker decorators
+- [ ] Prometheus / Grafana / Loki / Jaeger specific recipes
+- [ ] Log sampling and rate limiting
+- [ ] Copier or cookiecutter project template

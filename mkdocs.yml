@@ -16,10 +16,35 @@ nav:
   - Reference:
       - Public API: reference/public-api.md
       - Settings: reference/settings.md
+      - Modules:
+          - api: reference/modules/api.md
+          - bootstrap: reference/modules/bootstrap.md
+          - state: reference/modules/state.md
+          - settings: reference/modules/settings.md
+          - config.basic: reference/modules/config_basic.md
+          - config.dictconfig: reference/modules/config_dictconfig.md
+          - handlers.rich: reference/modules/handlers_rich.md
+          - handlers.stream: reference/modules/handlers_stream.md
+          - handlers.file: reference/modules/handlers_file.md
+          - handlers.queue: reference/modules/handlers_queue.md
+          - formatters.json: reference/modules/formatters_json.md
+          - formatters.key_value: reference/modules/formatters_key_value.md
+          - context.vars: reference/modules/context_vars.md
+          - context.managers: reference/modules/context_managers.md
+          - otel.correlation: reference/modules/otel_correlation.md
+          - integrations.asgi: reference/modules/integrations_asgi.md
+          - integrations.fastapi: reference/modules/integrations_fastapi.md
+          - structlog.config: reference/modules/structlog_config.md
+          - testing.capture: reference/modules/testing_capture.md
+          - testing.reset: reference/modules/testing_reset.md
   - Integrations:
       - Rich: integrations/rich.md
       - Structlog: integrations/structlog.md
       - OpenTelemetry: integrations/otel.md
+      - Web Frameworks: integrations/web.md
+  - Design:
+      - Overview: design/ultilog.md
+      - Checklist: design/scaffold-checklist.md
   - ADRs:
       - Ergonomic API: adr/0001-ergonomic-public-api.md
       - Lazy Bootstrap: adr/0002-lazy-bootstrap.md

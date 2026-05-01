@@ -1,65 +1,58 @@
 # Architecture
 
-`ultilog` is intentionally split into a small public API and a larger internal
-composition layer.
+ultilog is split into a small public API and a larger internal composition layer.
 
-## Public Surface
-
-The primary user-facing API is:
+## Public surface
 
 ```python
-from ultilog import get_logger, setup
+from ultilog import get_logger, setup, configure, logging_context
 ```
 
-The goal is to make logging feel available immediately while still allowing
-advanced configuration later.
+The goal is to make logging available immediately while allowing advanced configuration when needed.
 
-## Runtime Flow
+## Runtime flow
 
-1. User calls `get_logger()`.
-2. `ensure_configured()` checks runtime state.
-3. If needed, default settings are loaded.
-4. The root logging handler is installed.
-5. A standard-library logger is returned.
+```
+get_logger() -> ensure_configured() -> UltilogSettings -> configure_basic_logging()
+                     |                       |                      |
+              check state.configured   resolve preset      create handler + filter
+                     |                  apply env vars      install on root logger
+              thread-safe (RLock)       validate combos     set level
+```
 
-This means most applications can start without explicit setup, while applications
-that need control can call `setup(...)` before logger creation.
+1. `get_logger()` calls `ensure_configured()`.
+2. `ensure_configured()` checks `runtime_state.configured` under a re-entrant lock.
+3. If not configured, builds `UltilogSettings` from defaults and `ULTILOG_*` environment variables.
+4. Preset defaults and combination validation are applied.
+5. `configure_basic_logging()` creates the appropriate handler (Rich, stream, or JSON) and installs a `ContextFilter`.
+6. A standard-library logger is returned.
 
-## Module Responsibilities
+## Module responsibilities
 
-### `api.py`
+| Module | Role |
+|--------|------|
+| `api.py` | Thin public API -- delegates to bootstrap |
+| `bootstrap.py` | Idempotent configuration orchestration |
+| `state.py` | Mutable runtime state and lock |
+| `settings.py` | Root `UltilogSettings` (pydantic-settings) |
+| `models/` | Typed settings models for each subsystem |
+| `config/` | Stdlib logging configuration, presets, dictConfig, export |
+| `handlers/` | Handler factories (Rich, stream, file, queue) |
+| `formatters/` | JSON, key-value, and text formatters |
+| `context/` | `contextvars` storage, managers, decorators, request helpers |
+| `records/` | `ContextFilter` for injecting context into log records |
+| `integrations/` | Framework middleware (ASGI, FastAPI, Celery, httpx, RQ, SQLAlchemy) |
+| `otel/` | OpenTelemetry setup (traces, logs, metrics, correlation, propagation) |
+| `structlog/` | structlog configuration, processors, renderers, bridge |
+| `rich/` | Console factory, themes, render helpers |
+| `testing/` | Reset, capture, factories, fixtures |
+| `utils/` | Caller inference, env helpers, import tools |
 
-Owns the public API and should remain thin.
+## Key design patterns
 
-### `bootstrap.py`
-
-Owns idempotent configuration and setup orchestration.
-
-### `state.py`
-
-Owns runtime state and reset behavior.
-
-### `settings.py` and `models/`
-
-Own typed configuration.
-
-### `handlers/`
-
-Creates handler instances and does not attach them globally.
-
-### `context/`
-
-Owns runtime context. Context is intentionally separate from logger creation.
-
-### `integrations/`
-
-Owns optional framework integration points.
-
-### `otel/`
-
-Owns optional OpenTelemetry integration paths.
-
-## Why This Shape Works
-
-The package can grow from simple Rich-backed console logging into a structured
-observability toolkit without changing the basic import path.
+- **Lazy bootstrap** -- configuration on first use, not import time
+- **Idempotent** -- reconfiguration requires `force=True`
+- **Execution-scoped context** -- `contextvars`, not logger-time binding
+- **Presets drive defaults** -- dev/test/prod apply mode and level rules
+- **Optional deps degrade gracefully** -- extras for structlog, otel, web
+- **Stdlib as spine** -- all logging flows through Python's logging module

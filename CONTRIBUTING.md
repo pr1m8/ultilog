@@ -21,28 +21,49 @@ If you previously configured `pr1m8/utillog`, update or replace that entry so it
 ## Development Setup
 
 ```bash
-pdm sync -G dev
+pdm sync -G dev -G docs
 pdm run pytest
+pdm run ruff check .
+pdm run mypy src/ultilog
+```
+
+## Running Tests
+
+```bash
+pdm run pytest                      # full suite
+pdm run pytest tests/unit           # unit only
+pdm run pytest tests/integration    # integration only
+pdm run pytest tests/e2e            # e2e only
+pdm run pytest -k test_name         # single test
 ```
 
 ## Design Principles
 
 - Keep the public API small.
-- Keep bootstrap idempotent.
+- Keep bootstrap idempotent and thread-safe.
 - Keep context separate from logger construction.
-- Keep optional integrations optional.
+- Keep optional integrations optional -- all framework/library imports must be lazy.
 - Add tests with every feature.
+- Keep modules typed and mypy-strict-friendly.
 
 ## Test Layers
 
-- unit tests for isolated behavior
-- integration tests for composition
-- e2e tests for examples and CLI behavior
+- **unit** -- isolated component behavior
+- **integration** -- module composition and flows
+- **e2e** -- examples and CLI in subprocesses
 
 ## Code Style
 
 - Python 3.13+
-- full type hints
+- Full type hints (mypy strict mode)
 - Google-style docstrings
 - Pydantic v2 models for configuration
-- no hidden network calls
+- Ruff for linting and formatting (line length 100)
+- No hidden network calls
+
+## Making Changes
+
+1. Create a branch from `main`.
+2. Make small, focused changes with tests.
+3. Run `pdm run pytest && pdm run ruff check .` before pushing.
+4. Open a pull request against `main`.
