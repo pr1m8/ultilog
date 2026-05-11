@@ -4,6 +4,7 @@ repo_url: https://github.com/pr1m8/ultilog
 nav:
   - Home: index.md
   - Quickstart: quickstart.md
+  - Project Bootstrap: project-bootstrap.md
   - Architecture: architecture.md
   - Cookbook: cookbook.md
   - Testing: testing.md

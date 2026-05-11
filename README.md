@@ -46,8 +46,9 @@ log.info("hello")
 ### One-line helpers
 
 ```python
-from ultilog import setup_dev, setup_prod, setup_test, get_logger
+from ultilog import setup_auto, setup_dev, setup_prod, setup_test, get_logger
 
+setup_auto(service_name="my-api")       # env-aware: Rich dev, JSON prod, quiet tests
 setup_dev()                           # super-pretty Rich, DEBUG, tracebacks with locals
 setup_prod(service_name="my-api")     # JSON, INFO, OTel correlation auto-attached
 setup_test()                          # plain WARNING, quiet test output
@@ -273,6 +274,10 @@ export ULTILOG_RICH__SHOW_PATH=false
 
 ```bash
 ultilog doctor --json          # runtime diagnostics
+ultilog bootstrap              # inspect a project and print grouped install hints
+ultilog bootstrap --json       # machine-readable bootstrap plan
+ultilog bootstrap --commands   # install commands plus OTel zero-code commands
+ultilog bootstrap --snippet --service-name my-api
 ultilog show-config            # dump effective settings
 ultilog validate               # check configuration
 ultilog demo --mode plain      # emit a demo log line
@@ -284,6 +289,69 @@ Or via module:
 ```bash
 python -m ultilog doctor --json
 ```
+
+## Project Bootstrap
+
+`ultilog bootstrap` inspects a project and prints a non-destructive plan for the
+packages that make logging and observability work end to end. It reads
+`pyproject.toml`, lightly scans imports, detects the package manager, and groups
+recommendations by where they belong:
+
+| Target | pyproject location | Examples |
+|--------|--------------------|----------|
+| `observability-core` | `[project.optional-dependencies]` | OTel API/SDK/exporter, logging, ASGI/FastAPI/httpx/SQLAlchemy/Redis instrumentation |
+| `observability-extra` | `[project.optional-dependencies]` | Celery, botocore, grpc, urllib3, aiohttp, asyncpg instrumentation |
+| `formatting` | `[dependency-groups]` | `ruff` |
+| `typing` | `[dependency-groups]` | `mypy`, `pyright`, `types-*` packages |
+| `test-core` | `[dependency-groups]` | `pytest`, `pytest-cov`, `pytest-mock` |
+| `coverage` | `[dependency-groups]` | `coverage` |
+
+For PDM projects, the suggested commands use the right target directly:
+
+```bash
+pdm add -G observability-core opentelemetry-exporter-otlp ...
+pdm add -d -G typing mypy pyright types-requests
+pdm add -d -G test-core pytest pytest-cov pytest-mock
+```
+
+When OpenTelemetry zero-code tooling is installed, the plan also shows the
+official bootstrap commands:
+
+```bash
+pdm run opentelemetry-bootstrap -a requirements
+pdm run opentelemetry-bootstrap -a install
+pdm run opentelemetry-instrument python -m your_app
+```
+
+To intentionally run package-manager setup from the CLI, use `--apply` with
+one or more groups:
+
+```bash
+ultilog bootstrap --apply --group observability-core
+ultilog bootstrap --apply --group typing --group test-core
+```
+
+For application startup, generate a small setup snippet:
+
+```bash
+ultilog bootstrap --snippet --service-name my-api
+```
+
+The snippet calls `setup_auto(service_name="my-api")`, which uses Rich logging
+in development, quiet plain logging for tests, and production JSON logging with
+OTel trace/log correlation when `APP_ENV=prod` or `ULTILOG_ENV=prod`.
+
+Recommended repo shape:
+
+```python
+# src/my_api/logging.py
+from ultilog import get_logger, setup_auto
+
+setup_auto(service_name="my-api")
+log = get_logger(__name__)
+```
+
+Import that module once from your app entrypoint before creating other loggers.
 
 ## Testing
 

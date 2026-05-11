@@ -8,6 +8,34 @@ ultilog provides optional [OpenTelemetry](https://opentelemetry.io/) integration
 pip install "ultilog[otel]"
 ```
 
+## Project Bootstrap
+
+Use the bootstrap planner to detect project dependencies and get grouped install
+hints:
+
+```bash
+python -m ultilog bootstrap
+python -m ultilog bootstrap --json
+python -m ultilog bootstrap --commands
+```
+
+For PDM projects, OpenTelemetry packages are suggested under optional dependency
+groups such as `observability-core` and `observability-extra`.
+
+The planner also prints OpenTelemetry's zero-code bootstrap commands:
+
+```bash
+pdm run opentelemetry-bootstrap -a requirements
+pdm run opentelemetry-bootstrap -a install
+pdm run opentelemetry-instrument python -m your_app
+```
+
+To run only the grouped package setup:
+
+```bash
+python -m ultilog bootstrap --apply --group observability-core
+```
+
 ## Traces
 
 Configure a `TracerProvider` with sensible defaults:

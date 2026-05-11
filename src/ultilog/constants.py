@@ -24,8 +24,10 @@ Examples
 
 from __future__ import annotations
 
-DEFAULT_LOGGER_NAME = "ultilog"
-DEFAULT_PRESET = "dev"
-ENV_PREFIX = "ULTILOG_"
+from typing import Final, Literal
+
+DEFAULT_LOGGER_NAME: Final = "ultilog"
+DEFAULT_PRESET: Final[Literal["dev"]] = "dev"
+ENV_PREFIX: Final = "ULTILOG_"
 
 __all__ = ["DEFAULT_LOGGER_NAME", "DEFAULT_PRESET", "ENV_PREFIX"]

@@ -23,7 +23,7 @@ from __future__ import annotations
 import logging
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 LogLevel = Annotated[str | int, Field(description="Logging level name or integer.")]
 LogMode = Literal["rich", "plain", "json"]
@@ -92,7 +92,6 @@ class LoggingSettings(BaseModel):
             raise ValueError(f"Unknown logging level: {value!r}")
         return value.upper()
 
-    @computed_field
     @property
     def level_value(self) -> int:
         """Return the numeric logging level.
@@ -111,7 +110,6 @@ class LoggingSettings(BaseModel):
             return self.level
         return logging._nameToLevel[self.level.upper()]
 
-    @computed_field
     @property
     def effective_format(self) -> str:
         """Return the active standard logging format string.

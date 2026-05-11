@@ -13,3 +13,4 @@ build/
 .env.*
 site/
 .pdm-python
+.DS_Store

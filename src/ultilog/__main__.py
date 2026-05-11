@@ -49,6 +49,28 @@ def main(argv: Sequence[str] | None = None) -> int:
     doctor = subparsers.add_parser("doctor", help="print runtime diagnostics")
     doctor.add_argument("--json", action="store_true", help="emit JSON diagnostics")
 
+    bootstrap = subparsers.add_parser("bootstrap", help="plan project logging bootstrap")
+    bootstrap.add_argument("path", nargs="?", default=".", help="project path to inspect")
+    bootstrap.add_argument("--json", action="store_true", help="emit JSON bootstrap plan")
+    bootstrap.add_argument("--commands", action="store_true", help="print only install commands")
+    bootstrap.add_argument("--snippet", action="store_true", help="print application setup snippet")
+    bootstrap.add_argument(
+        "--service-name",
+        default="my-app",
+        help="service name used by --snippet",
+    )
+    bootstrap.add_argument(
+        "--apply",
+        action="store_true",
+        help="run missing package install commands for selected groups",
+    )
+    bootstrap.add_argument(
+        "--group",
+        action="append",
+        default=[],
+        help="install group to apply; may be repeated",
+    )
+
     demo = subparsers.add_parser("demo", help="emit a demo log line")
     demo.add_argument("--mode", choices=["rich", "plain", "json"], default="plain")
 
@@ -60,6 +82,9 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.command == "doctor":
         return _cmd_doctor(args)
+
+    if args.command == "bootstrap":
+        return _cmd_bootstrap(args)
 
     if args.command == "demo":
         return _cmd_demo(args)
@@ -110,6 +135,140 @@ def _cmd_demo(args: argparse.Namespace) -> int:
     log = get_logger("ultilog.demo", component="cli")
     log.info("cli.demo")
     return 0
+
+
+def _cmd_bootstrap(args: argparse.Namespace) -> int:
+    """Run the bootstrap planner subcommand.
+
+    Args:
+        args: Parsed CLI arguments.
+
+    Returns:
+        Exit code.
+
+    Raises:
+        None.
+    """
+    from ultilog.project_bootstrap import (
+        apply_project_bootstrap_plan,
+        build_project_bootstrap_plan,
+        setup_snippet,
+    )
+
+    plan = build_project_bootstrap_plan(args.path)
+    data = plan.to_dict()
+    if args.snippet:
+        print(setup_snippet(service_name=args.service_name))
+        return 0
+
+    if args.json:
+        print(json.dumps(data, indent=2, sort_keys=True))
+        return 0
+
+    if args.commands:
+        for command in plan.commands.values():
+            print(command)
+        print(plan.zero_code.requirements_command)
+        print(plan.zero_code.install_command)
+        print(plan.zero_code.run_command)
+        return 0
+
+    if args.apply:
+        selected_groups = set(args.group) if args.group else None
+        results = apply_project_bootstrap_plan(plan, groups=selected_groups)
+        if not results:
+            print("No bootstrap install commands to run.")
+            return 0
+        for result in results:
+            print(f"{result.group}: {result.command}")
+            if result.stdout:
+                print(result.stdout, end="")
+            if result.stderr:
+                print(result.stderr, end="")
+        return 0
+
+    _print_bootstrap_report(plan)
+    return 0
+
+
+def _print_bootstrap_report(plan: object) -> None:
+    """Render a human-friendly project bootstrap report."""
+    from rich import box
+    from rich.console import Console
+    from rich.panel import Panel
+    from rich.syntax import Syntax
+    from rich.table import Table
+
+    from ultilog.project_bootstrap import ProjectBootstrapPlan
+
+    resolved = plan
+    if not isinstance(resolved, ProjectBootstrapPlan):  # pragma: no cover
+        return
+
+    console = Console()
+    summary = Table.grid(padding=(0, 2))
+    summary.add_column(style="bold cyan")
+    summary.add_column()
+    summary.add_row("Project", resolved.root)
+    summary.add_row("Package manager", resolved.package_manager)
+    summary.add_row("pyproject", resolved.pyproject_path or "(not found)")
+    summary.add_row("Detected deps", str(len(resolved.detected_dependencies)))
+    console.print(Panel(summary, title="ultilog bootstrap", border_style="cyan"))
+
+    groups = Table(
+        "Group",
+        "Target",
+        "Packages",
+        "Missing command",
+        title="Install Groups",
+        box=box.SIMPLE_HEAVY,
+        expand=True,
+    )
+    for group in resolved.install_groups:
+        missing = [status.package for status in group.packages if not status.declared]
+        declared = len(group.packages) - len(missing)
+        status = f"{declared}/{len(group.packages)} declared"
+        packages = ", ".join(status.package for status in group.packages)
+        groups.add_row(
+            group.name,
+            group.kind,
+            f"{status}\n{packages}",
+            group.command or "(already declared)",
+        )
+    console.print(groups)
+
+    zero_code = Table(
+        "Step",
+        "Command",
+        title="OpenTelemetry Zero-Code",
+        box=box.SIMPLE,
+        expand=True,
+    )
+    zero_code.add_row("Review generated requirements", resolved.zero_code.requirements_command)
+    zero_code.add_row("Install into active environment", resolved.zero_code.install_command)
+    zero_code.add_row("Run app with instrumentation", resolved.zero_code.run_command)
+    console.print(zero_code)
+
+    if resolved.commands:
+        commands = "\n".join(resolved.commands.values())
+        console.print(
+            Panel(
+                Syntax(commands, "bash", word_wrap=True),
+                title="Setup Commands (raw: --commands)",
+                border_style="green",
+            )
+        )
+    else:
+        console.print(Panel("All planned groups are already declared.", border_style="green"))
+
+    console.print(
+        Panel(
+            "Generate app startup code with:\n"
+            "python -m ultilog bootstrap --snippet --service-name my-api",
+            title="Use In Your App",
+            border_style="magenta",
+        )
+    )
 
 
 def _cmd_show_config() -> int:

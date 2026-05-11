@@ -21,6 +21,7 @@ Examples
 from __future__ import annotations
 
 import logging
+import os
 from typing import Any
 
 from ultilog.bootstrap import configure_with_settings, ensure_configured, setup_logging
@@ -155,6 +156,64 @@ def setup_test(*, level: str = "WARNING", force: bool = True, **overrides: Any) 
     setup_logging(force=force, preset="test", level=level, **overrides)
 
 
+def setup_auto(
+    *,
+    service_name: str | None = None,
+    env: str | None = None,
+    level: str | None = None,
+    force: bool = True,
+    **overrides: Any,
+) -> None:
+    """Configure logging from the current application environment.
+
+    Environment resolution checks ``ULTILOG_ENV``, ``APP_ENV``,
+    ``ENVIRONMENT``, then ``ENV``. Production-like values use JSON production
+    logging, test-like values use quiet plain logging, and everything else uses
+    the Rich development setup.
+
+    Args:
+        service_name: Optional service name for production OTel attribution.
+        env: Explicit environment name. Overrides environment variables.
+        level: Optional log level override for the selected setup.
+        force: Whether to reconfigure if already configured.
+        **overrides: Additional flat setting overrides.
+
+    Returns:
+        None.
+
+    Examples:
+        >>> setup_auto(env="test")
+    """
+    resolved = _resolve_auto_environment(env)
+    if resolved in {"prod", "production", "live"}:
+        setup_prod(
+            level=level or "INFO",
+            service_name=service_name,
+            force=force,
+            **overrides,
+        )
+        return
+
+    if resolved in {"test", "testing", "ci"}:
+        setup_test(level=level or "WARNING", force=force, **overrides)
+        return
+
+    setup_dev(level=level or "DEBUG", force=force, **overrides)
+
+
+def _resolve_auto_environment(env: str | None) -> str:
+    """Resolve the environment name used by ``setup_auto``."""
+    value = (
+        env
+        or os.getenv("ULTILOG_ENV")
+        or os.getenv("APP_ENV")
+        or os.getenv("ENVIRONMENT")
+        or os.getenv("ENV")
+        or "dev"
+    )
+    return value.strip().lower()
+
+
 def configure(settings: UltilogSettings, *, force: bool = False) -> None:
     """Configure logging using an explicit settings object.
 
@@ -207,6 +266,7 @@ __all__ = [
     "logging_context",
     "reset_logging",
     "setup",
+    "setup_auto",
     "setup_dev",
     "setup_prod",
     "setup_test",

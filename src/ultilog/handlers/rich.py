@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Iterable
+from types import ModuleType
 
 from rich.console import Console
 from rich.highlighter import Highlighter, ReprHighlighter
@@ -35,7 +36,7 @@ def create_rich_handler(
     level: int = logging.NOTSET,
     console: Console | None = None,
     highlighter: Highlighter | None = None,
-    tracebacks_suppress: Iterable[str | object] = (),
+    tracebacks_suppress: Iterable[str | ModuleType] = (),
 ) -> RichHandler:
     """Create a configured ``RichHandler``.
 

@@ -19,11 +19,15 @@ Examples
 
 from __future__ import annotations
 
-from typing import Any
+from collections.abc import Awaitable, Callable
+from typing import Any, cast
 
 from ultilog.context.managers import logging_context
 from ultilog.context.request import request_context_values
 from ultilog.integrations.asgi import UltilogASGIMiddleware
+
+type HTTPMiddleware = Callable[..., Awaitable[Any]]
+type MiddlewareRegistrar = Callable[[str], Callable[[HTTPMiddleware], HTTPMiddleware]]
 
 
 def install_fastapi_logging(app: Any, *, request_id_header: bytes = b"x-request-id") -> Any:
@@ -54,7 +58,6 @@ def install_fastapi_logging(app: Any, *, request_id_header: bytes = b"x-request-
 
     middleware = getattr(app, "middleware", None)
     if callable(middleware):
-        @middleware("http")
         async def _ultilog_http_middleware(request: Any, call_next: Any) -> Any:
             scope = getattr(request, "scope", None)
             if isinstance(scope, dict):
@@ -71,6 +74,8 @@ def install_fastapi_logging(app: Any, *, request_id_header: bytes = b"x-request-
             with logging_context(**context):
                 return await call_next(request)
 
+        register = cast(MiddlewareRegistrar, middleware)
+        register("http")(_ultilog_http_middleware)
         return app
 
     msg = "app must provide add_middleware(...) or middleware(...)"

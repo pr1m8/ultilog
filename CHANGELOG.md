@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.4.0
+
+### Added
+
+- `setup_auto()` — environment-aware setup that chooses Rich dev logging,
+  quiet test logging, or JSON production logging based on `ULTILOG_ENV`,
+  `APP_ENV`, `ENVIRONMENT`, or `ENV`.
+- `ultilog bootstrap` project planner for detecting dependencies, grouping
+  recommended OpenTelemetry instrumentation, typing stubs, pytest, coverage,
+  and formatting packages by pyproject target.
+- `ultilog bootstrap --json`, `--commands`, `--snippet`, and `--apply --group`
+  modes for project generators, copy-paste setup, startup snippets, and
+  explicit package-manager setup.
+- OpenTelemetry zero-code bootstrap guidance for `opentelemetry-bootstrap -a
+  requirements`, `opentelemetry-bootstrap -a install`, and
+  `opentelemetry-instrument`.
+- Project bootstrap documentation and downstream-project e2e coverage.
+
+### Changed
+
+- Improved bootstrap CLI output with Rich panels and grouped install tables.
+- Fixed strict mypy issues in settings, Rich handler typing, FastAPI middleware
+  registration, and constants.
+
 ## 0.3.0
 
 ### Added
