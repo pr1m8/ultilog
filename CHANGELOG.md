@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.4.1
+
+### Fixed
+
+- Made PDM bootstrap apply commands use `pdm add --no-sync` so adding
+  recommended groups does not prune the active virtualenv.
+- Added read-only environment conflict checks before human bootstrap output and
+  `--apply`, including repair hints for `pip check` requirement conflicts.
+- Required `ultilog bootstrap --apply` to specify `--group` or `--all` instead
+  of applying every missing group implicitly.
+- Made OpenTelemetry zero-code direct installs opt-in in command output and
+  documentation, with `requirements` review shown first.
+
 ## 0.4.0
 
 ### Added

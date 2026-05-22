@@ -26,14 +26,14 @@ and groups package recommendations by pyproject target.
 For PDM projects, optional dependency groups are written with `-G`:
 
 ```bash
-pdm add -G observability-core opentelemetry-exporter-otlp
+pdm add --no-sync -G observability-core opentelemetry-exporter-otlp
 ```
 
 Development dependency groups use `-d -G`:
 
 ```bash
-pdm add -d -G typing mypy pyright types-requests
-pdm add -d -G test-core pytest pytest-cov pytest-mock
+pdm add --no-sync -d -G typing mypy pyright types-requests
+pdm add --no-sync -d -G test-core pytest pytest-cov pytest-mock
 ```
 
 Run selected setup groups explicitly with `--apply`:
@@ -41,10 +41,33 @@ Run selected setup groups explicitly with `--apply`:
 ```bash
 python -m ultilog bootstrap --apply --group observability-core
 python -m ultilog bootstrap --apply --group typing --group test-core
+python -m ultilog bootstrap --apply --all
 ```
 
-`--apply` runs the package-manager commands shown in the plan. Without
-`--apply`, the command only reports.
+`--apply` runs the package-manager commands shown in the plan. It requires
+either `--group` or `--all`, so it will not apply every group by accident.
+For PDM, generated commands include `--no-sync`; they update `pyproject.toml`
+and the lockfile without pruning the active virtualenv. Run `pdm sync` with
+the groups you actually want after reviewing the changes.
+
+## Environment Check
+
+Human output and `--apply` run a read-only dependency check before changing
+anything:
+
+```bash
+pdm run python -m pip check
+```
+
+When a conflict is found, `ultilog bootstrap` prints the exact `pip check`
+line and a repair command. For example, if an OpenTelemetry package requires a
+newer `opentelemetry-util-genai`, the report will point at that requirement
+before any grouped install command runs. Use `--no-env-check` to skip this
+check or `--ignore-conflicts` if you intentionally want to continue.
+
+Machine-readable plans stay read-only and avoid shelling out by default. Add
+`--check-environment` with `--json` or `--commands` when tooling needs the
+environment check in the output.
 
 ## OpenTelemetry Zero-Code
 
@@ -53,12 +76,15 @@ and find matching instrumentation packages:
 
 ```bash
 pdm run opentelemetry-bootstrap -a requirements
-pdm run opentelemetry-bootstrap -a install
 ```
 
 Use `requirements` when you want to inspect or capture the generated package
-list. Use `install` when you intentionally want OpenTelemetry to install the
-matching instrumentation into the active environment.
+list. Use `install` only after reviewing that list, because it installs into
+the active environment directly and then runs its own dependency check.
+
+```bash
+pdm run opentelemetry-bootstrap -a install
+```
 
 Run an application under zero-code instrumentation with:
 
@@ -98,6 +124,7 @@ python -m pip install ultilog
 python -m ultilog bootstrap
 python -m ultilog bootstrap --commands
 python -m ultilog bootstrap --apply --group observability-core
+python -m ultilog bootstrap --apply --group typing
 python -m ultilog bootstrap --snippet --service-name my-api
 ```
 

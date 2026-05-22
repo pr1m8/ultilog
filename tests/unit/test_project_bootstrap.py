@@ -66,7 +66,7 @@ dependencies = ["httpx>=0.28"]
     assert plan.package_manager == "pdm"
     assert plan.zero_code.install_command == "pdm run opentelemetry-bootstrap -a install"
     assert plan.commands["add_observability_core"].startswith(
-        "pdm add -G observability-core "
+        "pdm add --no-sync -G observability-core "
     )
 
 
@@ -105,9 +105,9 @@ dependencies = []
 
     plan = build_project_bootstrap_plan(tmp_path)
 
-    assert plan.commands["add_formatting"] == "pdm add -d -G formatting ruff"
-    assert "pdm add -d -G test-core" in plan.commands["add_test_core"]
-    assert plan.commands["add_coverage"] == "pdm add -d -G coverage coverage"
+    assert plan.commands["add_formatting"] == "pdm add --no-sync -d -G formatting ruff"
+    assert "pdm add --no-sync -d -G test-core" in plan.commands["add_test_core"]
+    assert plan.commands["add_coverage"] == "pdm add --no-sync -d -G coverage coverage"
 
 
 def test_setup_snippet_uses_auto_setup() -> None:
@@ -143,4 +143,41 @@ dependencies = ["requests>=2"]
 
     assert len(results) == 1
     assert results[0].group == "typing"
-    assert calls[0][:4] == ["pdm", "add", "-d", "-G"]
+    assert calls[0][:5] == ["pdm", "add", "--no-sync", "-d", "-G"]
+
+
+def test_bootstrap_plan_reports_environment_conflicts(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:  # type: ignore[no-untyped-def]
+    (tmp_path / "pdm.lock").write_text("", encoding="utf-8")
+    (tmp_path / "pyproject.toml").write_text(
+        """
+[project]
+dependencies = []
+""",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(project_bootstrap, "_installed_packages", lambda: set())
+
+    def fake_run(*args, **kwargs):  # type: ignore[no-untyped-def]
+        return subprocess.CompletedProcess(
+            args[0],
+            1,
+            stdout=(
+                "opentelemetry-instrumentation-openai-v2 2.4b0 has requirement "
+                "opentelemetry-util-genai>=0.4b0.dev, but you have "
+                "opentelemetry-util-genai 0.2b0.\n"
+            ),
+            stderr="",
+        )
+
+    monkeypatch.setattr(project_bootstrap.subprocess, "run", fake_run)
+
+    plan = build_project_bootstrap_plan(tmp_path, check_environment=True)
+
+    assert plan.environment_check is not None
+    assert plan.environment_check.issues
+    assert plan.environment_check.repair_commands == (
+        "pdm run python -m pip install --upgrade 'opentelemetry-util-genai>=0.4b0.dev'",
+    )

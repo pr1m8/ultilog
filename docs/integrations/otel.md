@@ -26,15 +26,22 @@ The planner also prints OpenTelemetry's zero-code bootstrap commands:
 
 ```bash
 pdm run opentelemetry-bootstrap -a requirements
-pdm run opentelemetry-bootstrap -a install
 pdm run opentelemetry-instrument python -m your_app
 ```
+
+Use `opentelemetry-bootstrap -a requirements` first. The direct `install`
+action writes into the active environment and can expose dependency conflicts,
+so treat it as an explicit follow-up after reviewing the generated list.
 
 To run only the grouped package setup:
 
 ```bash
 python -m ultilog bootstrap --apply --group observability-core
 ```
+
+For PDM projects, grouped setup uses `pdm add --no-sync` so `pyproject.toml`
+and the lockfile are updated without pruning the current virtualenv. Run
+`pdm sync` separately with the groups you actually want.
 
 ## Traces
 

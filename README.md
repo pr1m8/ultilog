@@ -276,7 +276,7 @@ export ULTILOG_RICH__SHOW_PATH=false
 ultilog doctor --json          # runtime diagnostics
 ultilog bootstrap              # inspect a project and print grouped install hints
 ultilog bootstrap --json       # machine-readable bootstrap plan
-ultilog bootstrap --commands   # install commands plus OTel zero-code commands
+ultilog bootstrap --commands   # grouped setup plus OTel zero-code commands
 ultilog bootstrap --snippet --service-name my-api
 ultilog show-config            # dump effective settings
 ultilog validate               # check configuration
@@ -309,9 +309,9 @@ recommendations by where they belong:
 For PDM projects, the suggested commands use the right target directly:
 
 ```bash
-pdm add -G observability-core opentelemetry-exporter-otlp ...
-pdm add -d -G typing mypy pyright types-requests
-pdm add -d -G test-core pytest pytest-cov pytest-mock
+pdm add --no-sync -G observability-core opentelemetry-exporter-otlp ...
+pdm add --no-sync -d -G typing mypy pyright types-requests
+pdm add --no-sync -d -G test-core pytest pytest-cov pytest-mock
 ```
 
 When OpenTelemetry zero-code tooling is installed, the plan also shows the
@@ -319,9 +319,14 @@ official bootstrap commands:
 
 ```bash
 pdm run opentelemetry-bootstrap -a requirements
-pdm run opentelemetry-bootstrap -a install
 pdm run opentelemetry-instrument python -m your_app
+# Optional after reviewing requirements:
+pdm run opentelemetry-bootstrap -a install
 ```
+
+`ultilog bootstrap` runs a read-only environment check for human output and
+`--apply`. If `pip check` reports a conflict, the CLI prints the conflicting
+requirement and a repair command before touching packages.
 
 To intentionally run package-manager setup from the CLI, use `--apply` with
 one or more groups:
@@ -329,7 +334,12 @@ one or more groups:
 ```bash
 ultilog bootstrap --apply --group observability-core
 ultilog bootstrap --apply --group typing --group test-core
+ultilog bootstrap --apply --all
 ```
+
+For PDM, `--apply` uses `pdm add --no-sync` so it updates `pyproject.toml` and
+the lockfile without pruning the active virtualenv. Run `pdm sync` with the
+groups you actually want only after reviewing the result.
 
 For application startup, generate a small setup snippet:
 

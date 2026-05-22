@@ -30,6 +30,9 @@ PackageManager = Literal["pdm", "uv", "poetry", "pip"]
 InstallGroupKind = Literal["runtime", "optional", "dev"]
 
 _REQ_NAME_RE = re.compile(r"^\s*([A-Za-z0-9_.-]+)")
+_PIP_CHECK_REQUIREMENT_RE = re.compile(
+    r"^.+ has requirement (?P<requirement>.+), but you have .+\.$"
+)
 _SKIP_DIRS = {
     ".git",
     ".mypy_cache",
@@ -182,6 +185,17 @@ class BootstrapCommandResult:
 
 
 @dataclass(frozen=True)
+class EnvironmentCheck:
+    """Read-only dependency health check for the active project environment."""
+
+    command: str
+    returncode: int | None
+    issues: tuple[str, ...]
+    repair_commands: tuple[str, ...]
+    error: str | None = None
+
+
+@dataclass(frozen=True)
 class ZeroCodeInstrumentation:
     """Commands and availability for OTel zero-code instrumentation."""
 
@@ -205,6 +219,7 @@ class ProjectBootstrapPlan:
     dev_tool_packages: tuple[PackageStatus, ...]
     type_stub_packages: tuple[PackageStatus, ...]
     install_groups: tuple[PackageInstallGroup, ...]
+    environment_check: EnvironmentCheck | None
     zero_code: ZeroCodeInstrumentation
     commands: dict[str, str]
 
@@ -213,11 +228,17 @@ class ProjectBootstrapPlan:
         return asdict(self)
 
 
-def build_project_bootstrap_plan(path: str | Path = ".") -> ProjectBootstrapPlan:
+def build_project_bootstrap_plan(
+    path: str | Path = ".",
+    *,
+    check_environment: bool = False,
+) -> ProjectBootstrapPlan:
     """Build a non-destructive package bootstrap plan for a project.
 
     Args:
         path: Project root or a path inside the project.
+        check_environment: Whether to run a read-only ``pip check`` command for
+            the active project environment.
 
     Returns:
         A project bootstrap plan.
@@ -297,6 +318,11 @@ def build_project_bootstrap_plan(path: str | Path = ".") -> ProjectBootstrapPlan
         dev_tool_packages=dev_tools,
         type_stub_packages=type_stubs,
         install_groups=install_groups,
+        environment_check=(
+            _run_environment_check(root, package_manager)
+            if check_environment
+            else None
+        ),
         zero_code=_zero_code_commands(package_manager, installed_packages),
         commands=commands,
     )
@@ -333,6 +359,8 @@ def apply_project_bootstrap_plan(
     Args:
         plan: Bootstrap plan to apply.
         groups: Optional group names to apply. Defaults to all groups with commands.
+            The CLI intentionally requires an explicit group or ``--all`` before
+            calling this helper.
 
     Returns:
         One result per executed command.
@@ -366,6 +394,35 @@ def apply_project_bootstrap_plan(
             msg = f"Bootstrap command failed for group {install_group.name!r}."
             raise RuntimeError(msg)
 
+    return tuple(results)
+
+
+def repair_environment(
+    environment_check: EnvironmentCheck,
+    *,
+    cwd: str | Path,
+) -> tuple[BootstrapCommandResult, ...]:
+    """Run generated repair commands for environment dependency conflicts."""
+    results: list[BootstrapCommandResult] = []
+    for command in environment_check.repair_commands:
+        completed = subprocess.run(
+            split_command(command),
+            cwd=cwd,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        result = BootstrapCommandResult(
+            group="environment",
+            command=command,
+            returncode=completed.returncode,
+            stdout=completed.stdout,
+            stderr=completed.stderr,
+        )
+        results.append(result)
+        if completed.returncode != 0:
+            msg = "Environment repair command failed."
+            raise RuntimeError(msg)
     return tuple(results)
 
 
@@ -593,7 +650,7 @@ def _install_command(
     group: str | None = None,
 ) -> str:
     if package_manager == "pdm":
-        base = ["pdm", "add"]
+        base = ["pdm", "add", "--no-sync"]
         if kind == "dev" and group is not None:
             base.extend(["-d", "-G", group])
         elif kind == "optional" and group is not None:
@@ -614,6 +671,60 @@ def _install_command(
             base.append("--optional")
         return join([*base, *packages])
     return join(["python", "-m", "pip", "install", *packages])
+
+
+def _environment_check_command(package_manager: PackageManager) -> str:
+    prefix = _run_prefix(package_manager)
+    return f"{prefix}python -m pip check"
+
+
+def _run_environment_check(root: Path, package_manager: PackageManager) -> EnvironmentCheck:
+    command = _environment_check_command(package_manager)
+    try:
+        completed = subprocess.run(
+            split_command(command),
+            cwd=root,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+    except FileNotFoundError as exc:
+        return EnvironmentCheck(
+            command=command,
+            returncode=None,
+            issues=(),
+            repair_commands=(),
+            error=str(exc),
+        )
+
+    output = "\n".join(part for part in (completed.stdout, completed.stderr) if part)
+    issues = tuple(line.strip() for line in output.splitlines() if line.strip())
+    if completed.returncode == 0:
+        issues = ()
+    return EnvironmentCheck(
+        command=command,
+        returncode=completed.returncode,
+        issues=issues,
+        repair_commands=_repair_commands_for_issues(package_manager, issues),
+    )
+
+
+def _repair_commands_for_issues(
+    package_manager: PackageManager,
+    issues: tuple[str, ...],
+) -> tuple[str, ...]:
+    requirements: list[str] = []
+    for issue in issues:
+        match = _PIP_CHECK_REQUIREMENT_RE.match(issue)
+        if match is not None:
+            requirements.append(match.group("requirement"))
+    if not requirements:
+        return ()
+    prefix = _run_prefix(package_manager)
+    return tuple(
+        f"{prefix}python -m pip install --upgrade {join([requirement])}"
+        for requirement in requirements
+    )
 
 
 def _zero_code_commands(
@@ -684,6 +795,7 @@ __all__ = [
     "OTEL_INSTRUMENTATION_PACKAGES",
     "TYPE_STUB_PACKAGES",
     "BootstrapCommandResult",
+    "EnvironmentCheck",
     "InstallGroupKind",
     "PackageInstallGroup",
     "PackageStatus",
@@ -692,5 +804,6 @@ __all__ = [
     "apply_project_bootstrap_plan",
     "build_project_bootstrap_plan",
     "installed_version",
+    "repair_environment",
     "setup_snippet",
 ]

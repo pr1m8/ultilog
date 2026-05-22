@@ -52,7 +52,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     bootstrap = subparsers.add_parser("bootstrap", help="plan project logging bootstrap")
     bootstrap.add_argument("path", nargs="?", default=".", help="project path to inspect")
     bootstrap.add_argument("--json", action="store_true", help="emit JSON bootstrap plan")
-    bootstrap.add_argument("--commands", action="store_true", help="print only install commands")
+    bootstrap.add_argument("--commands", action="store_true", help="print setup commands")
     bootstrap.add_argument("--snippet", action="store_true", help="print application setup snippet")
     bootstrap.add_argument(
         "--service-name",
@@ -69,6 +69,26 @@ def main(argv: Sequence[str] | None = None) -> int:
         action="append",
         default=[],
         help="install group to apply; may be repeated",
+    )
+    bootstrap.add_argument(
+        "--all",
+        action="store_true",
+        help="apply every missing install group",
+    )
+    bootstrap.add_argument(
+        "--check-environment",
+        action="store_true",
+        help="include a read-only pip check in JSON or commands output",
+    )
+    bootstrap.add_argument(
+        "--no-env-check",
+        action="store_true",
+        help="skip the read-only environment dependency check",
+    )
+    bootstrap.add_argument(
+        "--ignore-conflicts",
+        action="store_true",
+        help="apply even when the environment check reports dependency conflicts",
     )
 
     demo = subparsers.add_parser("demo", help="emit a demo log line")
@@ -155,7 +175,18 @@ def _cmd_bootstrap(args: argparse.Namespace) -> int:
         setup_snippet,
     )
 
-    plan = build_project_bootstrap_plan(args.path)
+    should_check_environment = (
+        not args.no_env_check
+        and (
+            args.check_environment
+            or args.apply
+            or not (args.json or args.commands or args.snippet)
+        )
+    )
+    plan = build_project_bootstrap_plan(
+        args.path,
+        check_environment=should_check_environment,
+    )
     data = plan.to_dict()
     if args.snippet:
         print(setup_snippet(service_name=args.service_name))
@@ -168,13 +199,40 @@ def _cmd_bootstrap(args: argparse.Namespace) -> int:
     if args.commands:
         for command in plan.commands.values():
             print(command)
+        if plan.environment_check is not None:
+            print(plan.environment_check.command)
+            for issue in plan.environment_check.issues:
+                print(f"# Environment issue: {issue}")
+            for command in plan.environment_check.repair_commands:
+                print(f"# Suggested repair: {command}")
         print(plan.zero_code.requirements_command)
-        print(plan.zero_code.install_command)
         print(plan.zero_code.run_command)
+        print(f"# Optional after reviewing requirements: {plan.zero_code.install_command}")
         return 0
 
     if args.apply:
-        selected_groups = set(args.group) if args.group else None
+        if args.group and args.all:
+            print("Use either --group or --all, not both.")
+            return 2
+        if not args.group and not args.all:
+            print("Refusing to apply every group implicitly. Pass --group NAME or --all.")
+            return 2
+        if (
+            plan.environment_check is not None
+            and plan.environment_check.issues
+            and not args.ignore_conflicts
+        ):
+            print("Environment dependency conflicts were detected before applying changes.")
+            for issue in plan.environment_check.issues:
+                print(f"- {issue}")
+            if plan.environment_check.repair_commands:
+                print("Suggested repair commands:")
+                for command in plan.environment_check.repair_commands:
+                    print(command)
+            print("Fix the environment first, or pass --ignore-conflicts to continue anyway.")
+            return 1
+
+        selected_groups = None if args.all else set(args.group)
         results = apply_project_bootstrap_plan(plan, groups=selected_groups)
         if not results:
             print("No bootstrap install commands to run.")
@@ -215,6 +273,9 @@ def _print_bootstrap_report(plan: object) -> None:
     summary.add_row("Detected deps", str(len(resolved.detected_dependencies)))
     console.print(Panel(summary, title="ultilog bootstrap", border_style="cyan"))
 
+    if resolved.environment_check is not None:
+        _print_environment_check(console, resolved.environment_check)
+
     groups = Table(
         "Group",
         "Target",
@@ -245,9 +306,19 @@ def _print_bootstrap_report(plan: object) -> None:
         expand=True,
     )
     zero_code.add_row("Review generated requirements", resolved.zero_code.requirements_command)
-    zero_code.add_row("Install into active environment", resolved.zero_code.install_command)
     zero_code.add_row("Run app with instrumentation", resolved.zero_code.run_command)
+    zero_code.add_row("Optional direct install after review", resolved.zero_code.install_command)
     console.print(zero_code)
+
+    console.print(
+        Panel(
+            "Prefer grouped pyproject commands for repeatable installs. "
+            "Use OpenTelemetry's direct install command only after reviewing "
+            "the generated requirements for your active environment.",
+            title="Zero-Code Install Safety",
+            border_style="yellow",
+        )
+    )
 
     if resolved.commands:
         commands = "\n".join(resolved.commands.values())
@@ -269,6 +340,61 @@ def _print_bootstrap_report(plan: object) -> None:
             border_style="magenta",
         )
     )
+
+
+def _print_environment_check(console: object, environment_check: object) -> None:
+    """Render read-only environment health details."""
+    from rich import box
+    from rich.console import Console
+    from rich.panel import Panel
+    from rich.table import Table
+
+    from ultilog.project_bootstrap import EnvironmentCheck
+
+    if not isinstance(console, Console):  # pragma: no cover
+        return
+    if not isinstance(environment_check, EnvironmentCheck):  # pragma: no cover
+        return
+
+    if environment_check.error is not None:
+        console.print(
+            Panel(
+                f"{environment_check.command}\n{environment_check.error}",
+                title="Environment Check Unavailable",
+                border_style="yellow",
+            )
+        )
+        return
+
+    if not environment_check.issues:
+        console.print(
+            Panel(
+                environment_check.command,
+                title="Environment Check Passed",
+                border_style="green",
+            )
+        )
+        return
+
+    table = Table(
+        "Issue",
+        title="Environment Check",
+        box=box.SIMPLE,
+        expand=True,
+    )
+    for issue in environment_check.issues:
+        table.add_row(issue)
+    console.print(table)
+
+    if environment_check.repair_commands:
+        repairs = "\n".join(environment_check.repair_commands)
+        console.print(
+            Panel(
+                repairs,
+                title="Suggested Repair Commands",
+                border_style="yellow",
+            )
+        )
 
 
 def _cmd_show_config() -> int:
